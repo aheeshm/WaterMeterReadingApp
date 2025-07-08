@@ -1,0 +1,13 @@
+using System.Threading.Tasks;
+using Api.Models;
+
+namespace Api.Services
+{
+    public interface IUserService
+    {
+        Task<bool> UsernameExistsAsync(string username);
+        Task<User> RegisterAsync(string username, string password, string propertyAddress);
+        Task<User> LoginAsync(string username, string password);
+        string HashPassword(string password);
+    }
+}
