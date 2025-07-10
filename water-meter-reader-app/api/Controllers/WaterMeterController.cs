@@ -49,17 +49,10 @@ namespace Api.Controllers
                 return BadRequest("Could not analyze the image.");
             }
 
-            var reading = new WaterReading
-            {
-                Reading = readingValue,
-                Date = DateTime.Now,
-                UserId = userId
-            };
-
-            _context.WaterReadings.Add(reading);
-            await _context.SaveChangesAsync();
-
-            return Ok(reading);
+            var success = await _waterReadingService.AddUserReadingAsync(1, readingValue, DateTime.Now.ToString("yyyy-MM-dd"), userId);
+            if (!success)
+                return StatusCode(500, "Failed to add reading.");
+            return Ok(new { Reading = readingValue, Date = DateTime.Now, UserId = userId });
         }
 
         private readonly IWaterReadingService _waterReadingService;
