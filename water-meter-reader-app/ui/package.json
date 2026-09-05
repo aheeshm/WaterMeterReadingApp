@@ -7,7 +7,11 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "playwright:install": "playwright install --with-deps"
   },
   "dependencies": {
     "axios": "^0.21.1",
@@ -16,8 +20,11 @@
     "react-scripts": "4.0.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^18.19.130",
     "eslint": "^7.14.0",
-    "eslint-config-react-app": "^6.0.0"
+    "eslint-config-react-app": "^6.0.0",
+    "typescript": "^4.9.5"
   },
   "proxy": "http://localhost:5246",
   "homepage": ".",
