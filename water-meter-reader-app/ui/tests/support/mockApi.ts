@@ -217,7 +217,7 @@ export async function createMockApi(page: Page): Promise<MockApiController> {
         }
 
         const totalUsage = matchingReadings.reduce((sum, reading) => sum + reading.reading, 0);
-        const totalCost = Number((totalUsage * activeRate).toFixed(2));
+        const totalCost = Number(matchingReadings.reduce((sum, reading) => sum + reading.cost, 0).toFixed(2));
 
         await route.fulfill({
             status: 200,

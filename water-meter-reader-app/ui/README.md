@@ -11,7 +11,7 @@ This UI project uses Playwright with TypeScript for end-to-end coverage of the W
 
 ## Run the tests locally
 
-From `/home/runner/work/WaterMeterReadingApp/WaterMeterReadingApp/water-meter-reader-app/ui`:
+From `water-meter-reader-app/ui`:
 
 ```bash
 npm ci
@@ -25,6 +25,8 @@ Useful variants:
 npm run test:e2e:headed
 npm run test:e2e:report
 ```
+
+Playwright 1.63 requires Node.js 20 or newer for the UI test commands.
 
 ## Test structure
 

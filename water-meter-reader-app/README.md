@@ -52,7 +52,7 @@ This project is a comprehensive application designed to facilitate the uploading
 The UI now includes a Playwright end-to-end test framework with TypeScript support.
 
 - Playwright setup, fixtures, page objects, and specs live in `ui/`
-- Local test instructions and examples are documented in `/home/runner/work/WaterMeterReadingApp/WaterMeterReadingApp/water-meter-reader-app/ui/README.md`
+- Local test instructions and examples are documented in `ui/README.md`
 
 ## Usage
 

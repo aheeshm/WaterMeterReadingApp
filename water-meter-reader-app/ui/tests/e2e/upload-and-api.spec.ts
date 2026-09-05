@@ -52,6 +52,7 @@ test.describe('Image uploads, readings, costs, and API integration', () => {
             }),
         );
 
+        mockApi.setRate(0.07);
         mockApi.queueUpload({ reading: 150 });
         await app.uploadImage(
             createImageFile({
@@ -72,9 +73,8 @@ test.describe('Image uploads, readings, costs, and API integration', () => {
             expect.objectContaining({ reading: 150, userId: 1, unitId: 1 }),
         ]);
 
-        mockApi.setRate(0.07);
         const costSummary = await fetchJson<{ totalUsage: number; totalCost: number }>(page, '/api/watermeter/cost/1');
 
-        expect(costSummary).toEqual({ totalUsage: 250, totalCost: 17.5 });
+        expect(costSummary).toEqual({ totalUsage: 250, totalCost: 15.5 });
     });
 });

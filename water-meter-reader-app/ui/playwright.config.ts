@@ -26,8 +26,13 @@ export default defineConfig({
         actionTimeout: 10 * 1000,
     },
     webServer: {
-        command: 'NODE_OPTIONS=--openssl-legacy-provider BROWSER=none node node_modules/react-scripts/bin/react-scripts.js start',
+        command: 'node node_modules/react-scripts/bin/react-scripts.js start',
         cwd: __dirname,
+        env: {
+            ...process.env,
+            BROWSER: 'none',
+            NODE_OPTIONS: '--openssl-legacy-provider',
+        },
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 120 * 1000,

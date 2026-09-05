@@ -29,6 +29,9 @@
   "proxy": "http://localhost:5246",
   "homepage": ".",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
