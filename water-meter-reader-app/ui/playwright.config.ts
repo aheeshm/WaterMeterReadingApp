@@ -31,7 +31,7 @@ export default defineConfig({
         env: {
             ...process.env,
             BROWSER: 'none',
-            NODE_OPTIONS: '--openssl-legacy-provider',
+            NODE_OPTIONS: [process.env.NODE_OPTIONS, '--openssl-legacy-provider'].filter(Boolean).join(' '),
         },
         url: baseURL,
         reuseExistingServer: !process.env.CI,

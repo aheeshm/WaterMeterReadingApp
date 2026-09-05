@@ -32,6 +32,9 @@ export function createImageFile(options: ImageFileOptions): UploadFile {
 export async function fetchJson<T>(page: Page, path: string): Promise<T> {
     return page.evaluate(async (resourcePath) => {
         const response = await fetch(resourcePath);
+        if (!response.ok) {
+            throw new Error(`Request to ${resourcePath} failed with status ${response.status}`);
+        }
         return response.json();
     }, path);
 }
