@@ -9,6 +9,8 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --openssl-legacy-provider
     defaults:
       run:
         working-directory: water-meter-reader-app/ui
