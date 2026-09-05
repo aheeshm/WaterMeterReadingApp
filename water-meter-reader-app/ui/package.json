@@ -6,6 +6,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:pages": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -20,7 +21,7 @@
     "eslint-config-react-app": "^6.0.0"
   },
   "proxy": "http://localhost:5246",
-  "homepage": ".",
+  "homepage": "https://aheeshm.github.io/WaterMeterReadingApp",
   "license": "MIT",
   "browserslist": {
     "production": [
