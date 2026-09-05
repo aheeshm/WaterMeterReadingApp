@@ -7,6 +7,14 @@ const DEFAULT_DEMO_USER = {
     propertyAddress: '123 Demo Lane',
 };
 
+const generateId = (prefix) => {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return `${prefix}-${crypto.randomUUID()}`;
+    }
+
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
 const getStorage = () => {
     if (typeof window === 'undefined' || !window.localStorage) {
         return null;
@@ -89,7 +97,7 @@ export const registerDemoUser = async ({ username, password, propertyAddress }) 
     }
 
     const nextUser = {
-        userId: `demo-${Date.now()}`,
+        userId: generateId('demo-user'),
         username: normalizedUsername,
         password,
         propertyAddress: propertyAddress.trim(),
@@ -110,7 +118,7 @@ export const uploadDemoReading = async ({ file, userId }) => {
     const reading = calculateReading(file);
     const cost = Number((reading * 0.0042).toFixed(2));
     const uploadRecord = {
-        id: `${userId}-${Date.now()}`,
+        id: generateId(userId),
         userId,
         fileName: file.name,
         reading,

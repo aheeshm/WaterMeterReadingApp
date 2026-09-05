@@ -75,7 +75,21 @@ export const getUserHistory = async (userId) => {
         return getDemoHistory(userId);
     }
 
-    return [];
+    const response = await fetch(`/api/watermeter/readings/${encodeURIComponent(userId)}`);
+
+    if (!response.ok) {
+        throw new Error(await readErrorMessage(response, 'Unable to load history.'));
+    }
+
+    const readings = await response.json();
+
+    return readings.map((entry) => ({
+        id: entry.id,
+        fileName: entry.date ? `Reading from ${new Date(entry.date).toLocaleString()}` : 'Saved reading',
+        reading: entry.reading,
+        cost: typeof entry.cost === 'number' ? entry.cost : null,
+        uploadedAt: entry.date,
+    }));
 };
 
 export { isMockMode };

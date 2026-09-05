@@ -44,4 +44,44 @@ describe('mockApi', () => {
             }),
         ]);
     });
+
+    it('creates unique identifiers even when registrations and uploads share a timestamp', async () => {
+        const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1725566400000);
+
+        try {
+            await registerDemoUser({
+                username: 'alice',
+                password: 'password123',
+                propertyAddress: '42 Main Street',
+            });
+            await registerDemoUser({
+                username: 'bob',
+                password: 'password123',
+                propertyAddress: '43 Main Street',
+            });
+
+            const alice = await loginDemoUser({
+                username: 'alice',
+                password: 'password123',
+            });
+            const bob = await loginDemoUser({
+                username: 'bob',
+                password: 'password123',
+            });
+
+            const firstUpload = await uploadDemoReading({
+                file: new File(['one'], 'one.png', { type: 'image/png' }),
+                userId: alice.userId,
+            });
+            const secondUpload = await uploadDemoReading({
+                file: new File(['two'], 'two.png', { type: 'image/png' }),
+                userId: alice.userId,
+            });
+
+            expect(alice.userId).not.toBe(bob.userId);
+            expect(firstUpload.id).not.toBe(secondUpload.id);
+        } finally {
+            nowSpy.mockRestore();
+        }
+    });
 });

@@ -80,7 +80,8 @@ function App() {
                         <ul className="history-list">
                             {history.map((entry) => (
                                 <li key={entry.id}>
-                                    <strong>{entry.fileName}</strong> — {entry.reading} gallons — ${Number(entry.cost).toFixed(2)}
+                                    <strong>{entry.fileName}</strong> — {entry.reading} gallons
+                                    {typeof entry.cost === 'number' && <> — ${Number(entry.cost).toFixed(2)}</>}
                                 </li>
                             ))}
                         </ul>
