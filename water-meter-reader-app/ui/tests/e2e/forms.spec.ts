@@ -33,5 +33,7 @@ test.describe('Form interactions', () => {
     test('shows the backend error message when login fails', async ({ app }) => {
         await app.login({ username: 'demo-user', password: 'wrong-password' });
         await app.expectMessage('Invalid username or password.');
+        await app.expectLoginPage();
+        await app.expectLoggedOut();
     });
 });

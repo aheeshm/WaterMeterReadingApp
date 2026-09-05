@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const port = process.env.PORT ?? '3000';
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${port}`;
+const nodeMajorVersion = Number.parseInt(process.versions.node.split('.')[0], 10);
+const needsLegacyOpenSslProvider = nodeMajorVersion >= 21;
 
 export default defineConfig({
     testDir: './tests/e2e',
@@ -31,7 +33,11 @@ export default defineConfig({
         env: {
             ...process.env,
             BROWSER: 'none',
-            NODE_OPTIONS: [process.env.NODE_OPTIONS, '--openssl-legacy-provider'].filter(Boolean).join(' '),
+            ...(needsLegacyOpenSslProvider
+                ? {
+                    NODE_OPTIONS: [process.env.NODE_OPTIONS, '--openssl-legacy-provider'].filter(Boolean).join(' '),
+                }
+                : {}),
         },
         url: baseURL,
         reuseExistingServer: !process.env.CI,
