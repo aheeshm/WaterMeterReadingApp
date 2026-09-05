@@ -1,4 +1,5 @@
+water-meter-reader-app/ui/build/
+water-meter-reader-app/ui/node_modules/
 water-meter-reader-app/ui/playwright-report/
 water-meter-reader-app/ui/test-results/
 water-meter-reader-app/ui/blob-report/
-water-meter-reader-app/ui/build/

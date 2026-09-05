@@ -7,7 +7,7 @@ body {
 
 .container {
     max-width: 800px;
-    margin: 0 auto;
+    margin: 24px auto;
     padding: 20px;
     background: white;
     border-radius: 8px;
@@ -24,6 +24,55 @@ h2 {
 
 .upload-form {
     margin-bottom: 20px;
+}
+
+.demo-banner {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    background-color: #e7f3ff;
+    color: #0b5394;
+}
+
+.hint-text {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.history-list {
+    padding-left: 20px;
+}
+
+.history-list li {
+    margin-bottom: 8px;
+}
+
+.container nav button,
+.container form button {
+    margin-right: 10px;
+    margin-bottom: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.container nav button:hover,
+.container form button:hover {
+    background-color: #0056b3;
+}
+
+.container input {
+    display: block;
+    width: 100%;
+    max-width: 360px;
+    padding: 10px;
+    margin: 0 0 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
 }
 
 .upload-form input[type="file"] {
