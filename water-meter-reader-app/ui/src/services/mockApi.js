@@ -6,13 +6,16 @@ const DEFAULT_DEMO_USER = {
     password: 'demo123',
     propertyAddress: '123 Demo Lane',
 };
+let fallbackIdCounter = 0;
 
 const generateId = (prefix) => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
         return `${prefix}-${crypto.randomUUID()}`;
     }
 
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    fallbackIdCounter += 1;
+
+    return `${prefix}-${Date.now()}-${fallbackIdCounter}`;
 };
 
 const getStorage = () => {
@@ -148,4 +151,5 @@ export const __resetDemoState = () => {
 
     storage.removeItem(DEMO_USERS_KEY);
     storage.removeItem(DEMO_HISTORY_KEY);
+    fallbackIdCounter = 0;
 };

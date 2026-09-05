@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 20
           cache: npm
           cache-dependency-path: water-meter-reader-app/ui/package-lock.json
 
@@ -32,6 +32,7 @@ jobs:
       - name: Build GitHub Pages bundle
         env:
           CI: "true"
+          NODE_OPTIONS: --openssl-legacy-provider
           REACT_APP_USE_MOCK_API: "true"
         run: npm run build:pages
 

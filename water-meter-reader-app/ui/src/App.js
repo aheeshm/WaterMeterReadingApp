@@ -10,16 +10,36 @@ function App() {
     const [reading, setReading] = useState(null);
     const [cost, setCost] = useState(null);
     const [history, setHistory] = useState([]);
+    const [historyError, setHistoryError] = useState('');
     const [message, setMessage] = useState('');
     const [page, setPage] = useState('login');
     const [user, setUser] = useState(null);
     const mockMode = isMockMode();
 
+    const loadHistory = (userId) => {
+        setHistoryError('');
+
+        return getUserHistory(userId)
+            .then(setHistory)
+            .catch((error) => {
+                setHistory([]);
+                setHistoryError(error.message || 'Unable to load history.');
+            });
+    };
+
     const handleUploadSuccess = (data) => {
         setReading(data.reading);
         setCost(data.cost);
         setMessage(data.message || 'Upload successful!');
-        setHistory((currentHistory) => [data, ...currentHistory]);
+
+        if (mockMode) {
+            setHistory((currentHistory) => [data, ...currentHistory]);
+            return;
+        }
+
+        if (user) {
+            loadHistory(user.userId);
+        }
     };
 
     const handleLoginSuccess = (userData) => {
@@ -34,12 +54,11 @@ function App() {
     useEffect(() => {
         if (!user) {
             setHistory([]);
+            setHistoryError('');
             return;
         }
 
-        getUserHistory(user.userId)
-            .then(setHistory)
-            .catch(() => setHistory([]));
+        loadHistory(user.userId);
     }, [user]);
 
     return (
@@ -85,8 +104,10 @@ function App() {
                                 </li>
                             ))}
                         </ul>
+                    ) : historyError ? (
+                        <p>{historyError}</p>
                     ) : (
-                        <p>{mockMode ? 'No demo uploads yet. Upload an image to see a mocked reading here.' : 'History is not available yet.'}</p>
+                        <p>{mockMode ? 'No demo uploads yet. Upload an image to see a mocked reading here.' : 'No saved readings yet.'}</p>
                     )}
                     {mockMode && <p className="hint-text">Demo history is stored only in this browser.</p>}
                 </div>
