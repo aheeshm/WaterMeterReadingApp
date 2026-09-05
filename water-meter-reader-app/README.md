@@ -47,6 +47,13 @@ This project is a comprehensive application designed to facilitate the uploading
      npm start
      ```
 
+## UI Testing
+
+The UI now includes a Playwright end-to-end test framework with TypeScript support.
+
+- Playwright setup, fixtures, page objects, and specs live in `ui/`
+- Local test instructions and examples are documented in `ui/README.md`
+
 ## Usage
 
 - Access the UI in your web browser at `http://localhost:3000`.
