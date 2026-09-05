@@ -1,21 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './styles/App.css';
 import UploadForm from './components/UploadForm';
 import UsageDisplay from './components/UsageDisplay';
 import RegisterPage from './components/RegisterPage';
 import LoginPage from './components/LoginPage';
+import { getUserHistory, isMockMode } from './services/api';
 
 function App() {
     const [reading, setReading] = useState(null);
     const [cost, setCost] = useState(null);
+    const [history, setHistory] = useState([]);
     const [message, setMessage] = useState('');
     const [page, setPage] = useState('login');
     const [user, setUser] = useState(null);
+    const mockMode = isMockMode();
 
     const handleUploadSuccess = (data) => {
         setReading(data.reading);
         setCost(data.cost);
-        setMessage('Upload successful!');
+        setMessage(data.message || 'Upload successful!');
+        setHistory((currentHistory) => [data, ...currentHistory]);
     };
 
     const handleLoginSuccess = (userData) => {
@@ -27,9 +31,25 @@ function App() {
         setPage('login');
     };
 
+    useEffect(() => {
+        if (!user) {
+            setHistory([]);
+            return;
+        }
+
+        getUserHistory(user.userId)
+            .then(setHistory)
+            .catch(() => setHistory([]));
+    }, [user]);
+
     return (
         <div className="container">
             <h1>Water Meter Reader</h1>
+            {mockMode && (
+                <div className="demo-banner">
+                    <strong>Demo mode:</strong> GitHub Pages uses mocked authentication, uploads, and history so the UI can run without the backend API or database.
+                </div>
+            )}
             <nav style={{ marginBottom: 20 }}>
                 {user ? (
                     <>
@@ -53,7 +73,23 @@ function App() {
                     <UsageDisplay waterUsage={reading} cost={cost} />
                 </>
             )}
-            {/* History page will be added later */}
+            {page === 'history' && user && (
+                <div className="usage-display">
+                    <h2>{mockMode ? 'Demo Upload History' : 'History'}</h2>
+                    {history.length > 0 ? (
+                        <ul className="history-list">
+                            {history.map((entry) => (
+                                <li key={entry.id}>
+                                    <strong>{entry.fileName}</strong> — {entry.reading} gallons — ${Number(entry.cost).toFixed(2)}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p>{mockMode ? 'No demo uploads yet. Upload an image to see a mocked reading here.' : 'History is not available yet.'}</p>
+                    )}
+                    {mockMode && <p className="hint-text">Demo history is stored only in this browser.</p>}
+                </div>
+            )}
         </div>
     );
 }
