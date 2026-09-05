@@ -8,11 +8,10 @@
 ## One-time repository setup
 
 1. Open **Settings** → **Pages** for this repository.
-2. Set **Source** to **Deploy from a branch**.
-3. Select the **`gh-pages`** branch and the **`/ (root)`** folder.
-4. Save the settings.
+2. Set **Source** to **GitHub Actions**.
+3. Save the settings.
 
-After that, every push to `main` will rebuild the React frontend and publish the static site to the `gh-pages` branch through GitHub Actions.
+After that, every push to `main` will rebuild the React frontend and publish the static site through GitHub Actions.
 
 ## Redeploy instructions
 
@@ -26,7 +25,8 @@ The workflow:
 - installs dependencies with `npm ci`
 - restores the npm cache through `actions/setup-node`
 - builds the React app with `npm run build:pages`
-- publishes the generated static files to the `gh-pages` branch
+- uploads the generated static files as a GitHub Pages artifact
+- deploys the artifact to GitHub Pages with the official Pages actions
 
 ## Mocked demo behavior
 
