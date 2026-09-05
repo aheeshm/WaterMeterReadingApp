@@ -7,8 +7,16 @@ import {
 } from './mockApi';
 
 const readErrorMessage = async (response, fallbackMessage) => {
-    const text = await response.text();
-    return text || fallbackMessage;
+    if (!response || typeof response.text !== 'function') {
+        return fallbackMessage;
+    }
+
+    try {
+        const text = await response.text();
+        return text || fallbackMessage;
+    } catch (error) {
+        return fallbackMessage;
+    }
 };
 
 export const loginUser = async (credentials) => {

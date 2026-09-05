@@ -28,4 +28,13 @@ describe('api', () => {
 
         expect(global.fetch).toHaveBeenCalledWith('/api/watermeter/readings/12');
     });
+
+    it('falls back to a default message when an error response has no text reader', async () => {
+        jest.spyOn(global, 'fetch').mockResolvedValue({
+            ok: false,
+            json: async () => ({ error: 'bad request' }),
+        });
+
+        await expect(getUserHistory(12)).rejects.toThrow('Unable to load history.');
+    });
 });

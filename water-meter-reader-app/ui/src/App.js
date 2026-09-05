@@ -32,11 +32,6 @@ function App() {
         setCost(data.cost);
         setMessage(data.message || 'Upload successful!');
 
-        if (mockMode) {
-            setHistory((currentHistory) => [data, ...currentHistory]);
-            return;
-        }
-
         if (user) {
             loadHistory(user.userId);
         }
