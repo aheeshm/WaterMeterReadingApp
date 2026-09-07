@@ -37,6 +37,11 @@ function App() {
         }
     };
 
+    const handleUploadError = () => {
+        setReading(null);
+        setCost(null);
+    };
+
     const handleLoginSuccess = (userData) => {
         setUser(userData);
         setPage('capture');
@@ -82,7 +87,12 @@ function App() {
             {page === 'register' && <RegisterPage onRegisterSuccess={handleRegisterSuccess} />}
             {page === 'capture' && user && (
                 <>
-                    <UploadForm onUploadSuccess={handleUploadSuccess} setMessage={setMessage} userId={user.userId} />
+                    <UploadForm
+                        onUploadSuccess={handleUploadSuccess}
+                        onUploadError={handleUploadError}
+                        setMessage={setMessage}
+                        userId={user.userId}
+                    />
                     {message && <p>{message}</p>}
                     <UsageDisplay waterUsage={reading} cost={cost} />
                 </>

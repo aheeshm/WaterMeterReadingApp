@@ -7,6 +7,7 @@ namespace Api.Interfaces
     public interface IWaterReadingService
     {
         Task<List<WaterReading>> GetUserReadingsAsync(int userId);
+        Task<WaterReading?> GetLatestUserReadingAsync(int userId);
         Task<bool> AddUserReadingAsync(int unitId, int reading, string date, int userId);
     }
 }

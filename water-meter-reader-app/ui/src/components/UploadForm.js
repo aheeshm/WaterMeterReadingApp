@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { isMockMode, uploadWaterMeterImage } from '../services/api';
 
-const UploadForm = ({ onUploadSuccess, setMessage, userId }) => {
+const UploadForm = ({ onUploadSuccess, onUploadError, setMessage, userId }) => {
     const [selectedFile, setSelectedFile] = useState(null);
     const mockMode = isMockMode();
 
@@ -20,6 +20,7 @@ const UploadForm = ({ onUploadSuccess, setMessage, userId }) => {
             const data = await uploadWaterMeterImage({ file: selectedFile, userId });
             onUploadSuccess(data);
         } catch (error) {
+            onUploadError();
             setMessage(error.message || 'An error occurred while uploading the file.');
         }
     };

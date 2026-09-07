@@ -27,6 +27,7 @@ type ReadingRecord = {
 
 type UploadPlan = {
     reading: number;
+    errorMessage?: string;
 };
 
 export type MockApiController = {
@@ -159,9 +160,25 @@ export async function createMockApi(page: Page): Promise<MockApiController> {
         }
 
         const plannedUpload = queuedUploads.shift();
+        if (plannedUpload?.errorMessage) {
+            await route.fulfill({ status: 400, body: plannedUpload.errorMessage });
+            return;
+        }
+
         const reading = plannedUpload?.reading ?? 100;
         const date = new Date('2026-01-01T00:00:00.000Z').toISOString();
         const cost = Number((reading * activeRate).toFixed(2));
+        const previousReading = [...readings]
+            .filter((entry) => entry.userId === userId)
+            .sort((left, right) => right.date.localeCompare(left.date))[0];
+
+        if (previousReading && reading < previousReading.reading) {
+            await route.fulfill({
+                status: 400,
+                body: `Detected reading ${reading} is lower than the previous reading ${previousReading.reading}. Upload a current meter image with a reading greater than or equal to the previous month.`,
+            });
+            return;
+        }
 
         readings.push({
             id: nextReadingId++,

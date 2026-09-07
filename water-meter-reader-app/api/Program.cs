@@ -3,6 +3,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddScoped<Api.Interfaces.IUserService, Api.Services.UserService>();
+builder.Services.AddScoped<Api.Interfaces.IWaterReadingService, Api.Services.WaterReadingService>();
+builder.Services.AddScoped<Api.Services.ImageAnalysisService>();
 builder.Services.AddDbContext<Api.Data.WaterMeterContext>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
