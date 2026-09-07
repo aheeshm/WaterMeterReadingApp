@@ -78,9 +78,19 @@ namespace Api.Controllers
                     return StatusCode(500, "Failed to add reading.");
                 }
 
+                var activeRate = await _context.RateConfigs
+                    .OrderByDescending(rate => rate.EffectiveDate)
+                    .Select(rate => (decimal?)rate.Rate)
+                    .FirstOrDefaultAsync();
+
+                var cost = activeRate.HasValue
+                    ? decimal.Round(analysisResult.Reading * activeRate.Value, 2)
+                    : (decimal?)null;
+
                 return Ok(new
                 {
                     Reading = analysisResult.Reading,
+                    Cost = cost,
                     Date = DateTime.UtcNow,
                     UserId = userId,
                     Message = "Upload successful!"

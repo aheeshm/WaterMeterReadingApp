@@ -59,7 +59,7 @@ describe('mockApi', () => {
         });
 
         await expect(uploadDemoReading({
-            file: new File(['x'.repeat(10)], 'meter-2.png', { type: 'image/png' }),
+            file: new File(['x'.repeat(32)], 'meter-2.png', { type: 'image/png' }),
             userId: 'demo-user',
         })).rejects.toThrow('greater than or equal to the previous month');
 
