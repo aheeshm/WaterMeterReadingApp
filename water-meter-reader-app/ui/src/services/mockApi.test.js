@@ -29,7 +29,7 @@ describe('mockApi', () => {
 
     it('stores uploaded demo readings in browser history', async () => {
         const upload = await uploadDemoReading({
-            file: new File(['meter-image'], 'meter.png', { type: 'image/png' }),
+            file: new File(['x'.repeat(64)], 'meter.png', { type: 'image/png' }),
             userId: 'demo-user',
         });
 
@@ -43,6 +43,32 @@ describe('mockApi', () => {
                 cost: upload.cost,
             }),
         ]);
+    });
+
+    it('rejects uploads that are not valid meter images', async () => {
+        await expect(uploadDemoReading({
+            file: new File(['short'], 'notes.txt', { type: 'text/plain' }),
+            userId: 'demo-user',
+        })).rejects.toThrow('Please upload a clear image of a water meter.');
+    });
+
+    it('rejects readings lower than the previous saved reading and allows equal readings', async () => {
+        await uploadDemoReading({
+            file: new File(['x'.repeat(699)], 'meter-1.png', { type: 'image/png' }),
+            userId: 'demo-user',
+        });
+
+        await expect(uploadDemoReading({
+            file: new File(['x'.repeat(10)], 'meter-2.png', { type: 'image/png' }),
+            userId: 'demo-user',
+        })).rejects.toThrow('greater than or equal to the previous month');
+
+        await expect(uploadDemoReading({
+            file: new File(['x'.repeat(699)], 'meter-3.png', { type: 'image/png' }),
+            userId: 'demo-user',
+        })).resolves.toEqual(expect.objectContaining({
+            fileName: 'meter-3.png',
+        }));
     });
 
     it('creates unique identifiers even when registrations and uploads share a timestamp', async () => {
@@ -70,11 +96,11 @@ describe('mockApi', () => {
             });
 
             const firstUpload = await uploadDemoReading({
-                file: new File(['one'], 'one.png', { type: 'image/png' }),
+                file: new File(['x'.repeat(64)], 'one.png', { type: 'image/png' }),
                 userId: alice.userId,
             });
             const secondUpload = await uploadDemoReading({
-                file: new File(['two'], 'two.png', { type: 'image/png' }),
+                file: new File(['x'.repeat(64)], 'two.png', { type: 'image/png' }),
                 userId: alice.userId,
             });
 

@@ -68,6 +68,10 @@ const calculateReading = (file) => {
     return baseReading + sizeBonus;
 };
 
+const isSupportedImage = (file) => Boolean(file && typeof file.type === 'string' && file.type.startsWith('image/'));
+
+const isMeterLikeDemoImage = (file) => isSupportedImage(file) && typeof file.size === 'number' && file.size >= 32;
+
 export const isMockMode = () => {
     if (process.env.REACT_APP_USE_MOCK_API === 'true') {
         return true;
@@ -118,7 +122,20 @@ export const uploadDemoReading = async ({ file, userId }) => {
         throw new Error('Please select a file to upload.');
     }
 
+    if (!isMeterLikeDemoImage(file)) {
+        throw new Error('Please upload a clear image of a water meter.');
+    }
+
     const reading = calculateReading(file);
+    const history = readCollection(DEMO_HISTORY_KEY).filter((entry) => entry.userId === userId);
+    const previousReading = history[0];
+
+    if (previousReading && reading < previousReading.reading) {
+        throw new Error(
+            `Detected reading ${reading} is lower than the previous reading ${previousReading.reading}. Upload a current meter image with a reading greater than or equal to the previous month.`,
+        );
+    }
+
     const cost = Number((reading * 0.0042).toFixed(2));
     const uploadRecord = {
         id: generateId(userId),
@@ -128,7 +145,6 @@ export const uploadDemoReading = async ({ file, userId }) => {
         cost,
         uploadedAt: new Date().toISOString(),
     };
-    const history = readCollection(DEMO_HISTORY_KEY);
 
     writeCollection(DEMO_HISTORY_KEY, [uploadRecord, ...history]);
 

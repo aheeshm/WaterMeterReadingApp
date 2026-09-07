@@ -6,6 +6,7 @@ using Api.Services;
 using Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Api.Interfaces;
+using System;
 
 namespace Api.Controllers
 {
@@ -15,46 +16,6 @@ namespace Api.Controllers
     {
         private readonly WaterMeterContext _context;
         private readonly ImageAnalysisService _imageAnalysisService;
-
-        public WaterMeterController(WaterMeterContext context, ImageAnalysisService imageAnalysisService)
-        {
-            _context = context;
-            _imageAnalysisService = imageAnalysisService;
-        }
-
-        [HttpPost("upload")]
-        public async Task<IActionResult> UploadImage(IFormFile file, [FromForm] int userId)
-        {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("No file uploaded.");
-            }
-
-            // Save the uploaded file to a temporary location
-            var tempFilePath = Path.GetTempFileName();
-            using (var stream = new FileStream(tempFilePath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            // Analyze the image using the file path
-            var readingValue = await _imageAnalysisService.AnalyzeImageAsync(tempFilePath);
-
-            // Delete the temp file after analysis
-            System.IO.File.Delete(tempFilePath);
-
-            // Since AnalyzeImageAsync returns int, check for a valid value (e.g., > 0)
-            if (readingValue <= 0)
-            {
-                return BadRequest("Could not analyze the image.");
-            }
-
-            var success = await _waterReadingService.AddUserReadingAsync(1, readingValue, DateTime.Now.ToString("yyyy-MM-dd"), userId);
-            if (!success)
-                return StatusCode(500, "Failed to add reading.");
-            return Ok(new { Reading = readingValue, Date = DateTime.Now, UserId = userId });
-        }
-
         private readonly IWaterReadingService _waterReadingService;
 
         public WaterMeterController(WaterMeterContext context, ImageAnalysisService imageAnalysisService, IWaterReadingService waterReadingService)
@@ -69,6 +30,69 @@ namespace Api.Controllers
         {
             var readings = await _waterReadingService.GetUserReadingsAsync(userId);
             return Ok(readings);
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage(IFormFile file, [FromForm] int userId)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            if (userId <= 0)
+            {
+                return BadRequest("A valid user is required.");
+            }
+
+            var tempFilePath = Path.GetTempFileName();
+
+            try
+            {
+                await using (var stream = new FileStream(tempFilePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                var analysisResult = await _imageAnalysisService.AnalyzeImageAsync(tempFilePath);
+                if (!analysisResult.IsMeterImage)
+                {
+                    return BadRequest(analysisResult.Message);
+                }
+
+                var previousReading = await _waterReadingService.GetLatestUserReadingAsync(userId);
+                if (previousReading != null && analysisResult.Reading < previousReading.Reading)
+                {
+                    return BadRequest(
+                        $"Detected reading {analysisResult.Reading} is lower than the previous reading {previousReading.Reading}. Upload a current meter image with a reading greater than or equal to the previous month.");
+                }
+
+                var success = await _waterReadingService.AddUserReadingAsync(
+                    1,
+                    analysisResult.Reading,
+                    DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                    userId);
+
+                if (!success)
+                {
+                    return StatusCode(500, "Failed to add reading.");
+                }
+
+                return Ok(new
+                {
+                    Reading = analysisResult.Reading,
+                    Date = DateTime.UtcNow,
+                    UserId = userId,
+                    Message = "Upload successful!"
+                });
+            }
+            finally
+            {
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+            }
         }
 
         [HttpGet("cost/{unitId}")]

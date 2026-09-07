@@ -50,6 +50,14 @@ namespace Api.Services
             }
         }
 
+        public async Task<WaterReading?> GetLatestUserReadingAsync(int userId)
+        {
+            return await _context.WaterReadings
+                .Where(reading => reading.UserId == userId)
+                .OrderByDescending(reading => reading.Date)
+                .FirstOrDefaultAsync();
+        }
+
         public async Task<bool> AddUserReadingAsync(int unitId, int reading, string date, int userId)
         {
             var sqlPath = Path.Combine("SqlScripts", "AddUserReading.sql");

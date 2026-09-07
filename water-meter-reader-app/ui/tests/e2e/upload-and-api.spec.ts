@@ -42,6 +42,53 @@ test.describe('Image uploads, readings, costs, and API integration', () => {
         expect(uploadRequests[1]?.rawBody).toContain('name="userId"');
     });
 
+    test('rejects uploads when meter validation fails', async ({ app, mockApi }) => {
+        mockApi.queueUpload({ reading: 0, errorMessage: 'Please upload a clear image of a water meter.' });
+
+        await app.uploadImage(
+            createImageFile({
+                name: 'blurry-upload.png',
+                mimeType: 'image/png',
+                sizeInBytes: 512,
+            }),
+        );
+
+        await app.expectMessage('Please upload a clear image of a water meter.');
+        await app.expectNoUsageData();
+    });
+
+    test('rejects readings lower than the previous saved reading', async ({ app, mockApi, page }) => {
+        mockApi.queueUpload({ reading: 150 });
+        await app.uploadImage(
+            createImageFile({
+                name: 'first-valid-reading.png',
+                mimeType: 'image/png',
+                sizeInBytes: 1024,
+            }),
+        );
+
+        mockApi.queueUpload({ reading: 120 });
+        await app.uploadImage(
+            createImageFile({
+                name: 'older-meter-photo.jpg',
+                mimeType: 'image/jpeg',
+                sizeInBytes: 2048,
+            }),
+        );
+
+        await app.expectMessage(
+            'Detected reading 120 is lower than the previous reading 150. Upload a current meter image with a reading greater than or equal to the previous month.',
+        );
+
+        const readings = await fetchJson<Array<{ reading: number; userId: number; unitId: number }>>(
+            page,
+            '/api/watermeter/readings/1',
+        );
+
+        expect(readings).toHaveLength(1);
+        expect(readings[0]).toEqual(expect.objectContaining({ reading: 150, userId: 1, unitId: 1 }));
+    });
+
     test('stores uploaded readings and exposes reading-history and cost endpoints after UI activity', async ({ app, mockApi, page }) => {
         mockApi.queueUpload({ reading: 100 });
         await app.uploadImage(
