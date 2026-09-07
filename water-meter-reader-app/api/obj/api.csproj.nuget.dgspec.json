@@ -10,7 +10,7 @@
         "projectUniqueName": "/home/runner/work/WaterMeterReadingApp/WaterMeterReadingApp/water-meter-reader-app/api/api.csproj",
         "projectName": "api",
         "projectPath": "/home/runner/work/WaterMeterReadingApp/WaterMeterReadingApp/water-meter-reader-app/api/api.csproj",
-        "packagesPath": "/home/runner/.nuget/packages/",
+        "packagesPath": "/tmp/codeql-scratch-292b24956d8ba4ec/dbs/csharp/working/packages",
         "outputPath": "/home/runner/work/WaterMeterReadingApp/WaterMeterReadingApp/water-meter-reader-app/api/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
@@ -79,6 +79,14 @@
             "System.Drawing.Common": {
               "target": "Package",
               "version": "[9.0.6, )"
+            },
+            "Tesseract": {
+              "target": "Package",
+              "version": "[5.2.0, )"
+            },
+            "Tesseract.Data.English": {
+              "target": "Package",
+              "version": "[4.0.0, )"
             }
           },
           "imports": [
@@ -92,6 +100,20 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.30, 8.0.30]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.linux-x64",
+              "version": "[8.0.30, 8.0.30]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.30, 8.0.30]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
