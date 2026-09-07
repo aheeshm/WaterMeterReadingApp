@@ -1,12 +1,17 @@
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Api.Models;
+using Tesseract;
 
 namespace Api.Services
 {
     public class ImageAnalysisService
     {
+        private const float MinimumOcrConfidence = 0.45f;
+
         public async Task<ImageAnalysisResult> AnalyzeImageAsync(string imagePath)
         {
             try
@@ -19,7 +24,19 @@ namespace Api.Services
                     return new ImageAnalysisResult
                     {
                         IsMeterImage = false,
-                        Message = "Please upload a clear image of a water meter."
+                        Message = "Please upload a clear image of a water meter.",
+                        AnalysisMethod = "validation"
+                    };
+                }
+
+                var ocrReading = await TryExtractReadingWithLocalOcrAsync(bitmap);
+                if (ocrReading.HasValue)
+                {
+                    return new ImageAnalysisResult
+                    {
+                        IsMeterImage = true,
+                        Reading = ocrReading.Value,
+                        AnalysisMethod = "local-ocr"
                     };
                 }
 
@@ -29,14 +46,16 @@ namespace Api.Services
                     return new ImageAnalysisResult
                     {
                         IsMeterImage = false,
-                        Message = "Could not read the meter value from the uploaded image."
+                        Message = "Could not read the meter value from the uploaded image.",
+                        AnalysisMethod = "fallback"
                     };
                 }
 
                 return new ImageAnalysisResult
                 {
                     IsMeterImage = true,
-                    Reading = extractedReading
+                    Reading = extractedReading,
+                    AnalysisMethod = "heuristic-fallback"
                 };
             }
             catch (OutOfMemoryException)
@@ -44,7 +63,8 @@ namespace Api.Services
                 return new ImageAnalysisResult
                 {
                     IsMeterImage = false,
-                    Message = "The uploaded file is not a valid image."
+                    Message = "The uploaded file is not a valid image.",
+                    AnalysisMethod = "validation"
                 };
             }
             catch (FileNotFoundException)
@@ -52,9 +72,77 @@ namespace Api.Services
                 return new ImageAnalysisResult
                 {
                     IsMeterImage = false,
-                    Message = "The uploaded file could not be processed."
+                    Message = "The uploaded file could not be processed.",
+                    AnalysisMethod = "validation"
                 };
             }
+        }
+
+        private static async Task<int?> TryExtractReadingWithLocalOcrAsync(Bitmap bitmap)
+        {
+            var tempImagePath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.png");
+
+            try
+            {
+                using var processedBitmap = CreateHighContrastBitmap(bitmap);
+                processedBitmap.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Png);
+
+                return await Task.Run(() =>
+                {
+                    try
+                    {
+                        var tessdataPath = Path.Combine(AppContext.BaseDirectory, "tessdata");
+                        using var engine = new TesseractEngine(tessdataPath, "eng", EngineMode.Default);
+                        engine.SetVariable("tessedit_char_whitelist", "0123456789");
+
+                        using var pix = Pix.LoadFromFile(tempImagePath);
+                        using var page = engine.Process(pix, PageSegMode.SingleBlock);
+                        var confidence = page.GetMeanConfidence();
+                        var digits = Regex.Replace(page.GetText() ?? string.Empty, "[^0-9]", string.Empty);
+
+                        if (confidence < MinimumOcrConfidence || digits.Length == 0)
+                        {
+                            return (int?)null;
+                        }
+
+                        if (int.TryParse(digits, out var reading))
+                        {
+                            return reading;
+                        }
+
+                        return null;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                });
+            }
+            finally
+            {
+                if (File.Exists(tempImagePath))
+                {
+                    File.Delete(tempImagePath);
+                }
+            }
+        }
+
+        private static Bitmap CreateHighContrastBitmap(Bitmap source)
+        {
+            var processed = new Bitmap(source.Width, source.Height, PixelFormat.Format24bppRgb);
+
+            for (var y = 0; y < source.Height; y++)
+            {
+                for (var x = 0; x < source.Width; x++)
+                {
+                    var pixel = source.GetPixel(x, y);
+                    var brightness = (pixel.R + pixel.G + pixel.B) / 3;
+                    var value = brightness >= 140 ? 255 : 0;
+                    processed.SetPixel(x, y, Color.FromArgb(value, value, value));
+                }
+            }
+
+            return processed;
         }
 
         private static bool LooksLikeMeter(Bitmap bitmap)
