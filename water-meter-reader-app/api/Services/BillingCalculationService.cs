@@ -200,15 +200,18 @@ public class BillingCalculationService : IBillingCalculationService
             }
         }
 
-        if (request.IncludeInfrastructureSurcharges && request.IsUnoccupiedProperty && propertyRateableValue > 250000m)
+        if (request.IncludeInfrastructureSurcharges && request.IsUnoccupiedProperty)
         {
             var fixedChargeSegment = tariffSegments.Last();
             var fixedChargeBands = await _tariffRepository.GetTariffBandsAsync(fixedChargeSegment.Schedule.TariffScheduleId, cancellationToken);
             var fixedBand = FindSingleBand(fixedChargeBands, ServiceType.WATER, "SEWER_INFRASTRUCTURE_WATER", "CCUNOCCFIX");
-            var fixedLine = BuildInfrastructureLine(fixedBand, ServiceType.WATER, 1m, null);
-            fixedLine.TariffScheduleId = fixedChargeSegment.Schedule.TariffScheduleId;
-            fixedLine.EffectiveDate = fixedChargeSegment.StartDate;
-            lines.Add(fixedLine);
+            if (IsBandEligibleForPropertyValue(fixedBand, propertyRateableValue))
+            {
+                var fixedLine = BuildInfrastructureLine(fixedBand, ServiceType.WATER, 1m, null);
+                fixedLine.TariffScheduleId = fixedChargeSegment.Schedule.TariffScheduleId;
+                fixedLine.EffectiveDate = fixedChargeSegment.StartDate;
+                lines.Add(fixedLine);
+            }
         }
 
         var responseLines = lines
@@ -240,51 +243,63 @@ public class BillingCalculationService : IBillingCalculationService
         var propertyAccount = await EnsurePropertyAccountAsync(request, supplyType, developmentType, propertyRateableValue, accountBillingType, cancellationToken);
         if (propertyAccount != null)
         {
-            var calculation = new BillingCalculation
+            if (tariffSegments.Count == 1)
             {
-                CalculationDate = DateTime.UtcNow,
-                TariffScheduleId = tariffSegments.First().Schedule.TariffScheduleId,
-                PropertyAccountId = propertyAccount.PropertyAccountId,
-                PreviousReadingKl = request.PreviousReadingKl,
-                CurrentReadingKl = request.CurrentReadingKl,
-                ConsumptionKl = consumptionKl,
-                TotalIncludingVat = totalIncludingVat,
-                TotalExcludingVat = totalExcludingVat,
-                CalculationRequestJson = JsonSerializer.Serialize(request),
-                CreatedAt = DateTime.UtcNow,
-                LineItems = responseLines.Select((line, index) => new CalculationLineItem
+                var calculation = new BillingCalculation
                 {
-                    LineNumber = index + 1,
-                    ServiceType = Enum.Parse<ServiceType>(line.ServiceType),
-                    ChargeCode = line.ChargeCode,
-                    BandLowerKl = line.BandLowerKl,
-                    BandUpperKl = line.BandUpperKl,
-                    VolumeAllocatedKl = line.VolumeAllocatedKl,
-                    DischargePercentage = line.DischargePercentage,
-                    BillableSewerVolumeKl = line.BillableSewerVolumeKl,
-                    UnitRateIncludingVat = line.UnitRateIncludingVat,
-                    UnitRateExcludingVat = line.UnitRateExcludingVat,
-                    UnroundedLineAmountIncludingVat = line.UnroundedLineAmountIncludingVat,
-                    UnroundedLineAmountExcludingVat = line.UnroundedLineAmountExcludingVat,
-                    LineAmountIncludingVat = line.LineAmountIncludingVat,
-                    LineAmountExcludingVat = line.LineAmountExcludingVat,
-                    SourcePage = line.SourcePage
-                }).ToList()
-            };
+                    CalculationDate = DateTime.UtcNow,
+                    TariffScheduleId = tariffSegments.First().Schedule.TariffScheduleId,
+                    PropertyAccountId = propertyAccount.PropertyAccountId,
+                    PreviousReadingKl = request.PreviousReadingKl,
+                    CurrentReadingKl = request.CurrentReadingKl,
+                    ConsumptionKl = consumptionKl,
+                    TotalIncludingVat = totalIncludingVat,
+                    TotalExcludingVat = totalExcludingVat,
+                    CalculationRequestJson = JsonSerializer.Serialize(request),
+                    CreatedAt = DateTime.UtcNow,
+                    LineItems = responseLines.Select((line, index) => new CalculationLineItem
+                    {
+                        LineNumber = index + 1,
+                        ServiceType = Enum.Parse<ServiceType>(line.ServiceType),
+                        ChargeCode = line.ChargeCode,
+                        BandLowerKl = line.BandLowerKl,
+                        BandUpperKl = line.BandUpperKl,
+                        VolumeAllocatedKl = line.VolumeAllocatedKl,
+                        DischargePercentage = line.DischargePercentage,
+                        BillableSewerVolumeKl = line.BillableSewerVolumeKl,
+                        UnitRateIncludingVat = line.UnitRateIncludingVat,
+                        UnitRateExcludingVat = line.UnitRateExcludingVat,
+                        UnroundedLineAmountIncludingVat = line.UnroundedLineAmountIncludingVat,
+                        UnroundedLineAmountExcludingVat = line.UnroundedLineAmountExcludingVat,
+                        LineAmountIncludingVat = line.LineAmountIncludingVat,
+                        LineAmountExcludingVat = line.LineAmountExcludingVat,
+                        SourcePage = line.SourcePage
+                    }).ToList()
+                };
 
-            _context.BillingCalculations.Add(calculation);
-            await _context.SaveChangesAsync(cancellationToken);
+                _context.BillingCalculations.Add(calculation);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
         }
 
         return new BillingCalculationResponse
         {
-            TariffScheduleId = tariffSegments.First().Schedule.TariffScheduleId,
+            TariffScheduleId = tariffSegments.Count == 1 ? tariffSegments.First().Schedule.TariffScheduleId : null,
             EffectiveFrom = tariffSegments.First().Schedule.EffectiveFrom,
             EffectiveTo = tariffSegments.Last().Schedule.EffectiveTo,
             ConsumptionKl = consumptionKl,
             TotalIncludingVat = totalIncludingVat,
             TotalExcludingVat = totalExcludingVat,
             SewerInfrastructureBasis = request.SewerInfrastructureBasis,
+            TariffSegments = tariffSegments.Select(segment => new TariffScheduleSegmentDto
+            {
+                TariffScheduleId = segment.Schedule.TariffScheduleId,
+                FinancialYear = segment.Schedule.FinancialYear,
+                ScheduleEffectiveFrom = segment.Schedule.EffectiveFrom,
+                ScheduleEffectiveTo = segment.Schedule.EffectiveTo,
+                SegmentStart = segment.StartDate,
+                SegmentEnd = segment.EndDate
+            }).ToList(),
             LineItems = responseLines
         };
     }
@@ -436,6 +451,13 @@ public class BillingCalculationService : IBillingCalculationService
         }
 
         return match;
+    }
+
+    private static bool IsBandEligibleForPropertyValue(TariffBand band, decimal propertyRateableValue)
+    {
+        var withinMaximum = !band.PropertyValueMaximum.HasValue || propertyRateableValue <= band.PropertyValueMaximum.Value;
+        var aboveMinimumExclusive = !band.PropertyValueMinimumExclusive.HasValue || propertyRateableValue > band.PropertyValueMinimumExclusive.Value;
+        return withinMaximum && aboveMinimumExclusive;
     }
 
     private static ChargeLineDraft BuildInfrastructureLine(TariffBand band, ServiceType serviceType, decimal volume, decimal? dischargePercentage)

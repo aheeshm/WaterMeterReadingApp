@@ -10,10 +10,12 @@ namespace Api.Controllers;
 public class BillingController : ControllerBase
 {
     private readonly IBillingCalculationService _billingCalculationService;
+    private readonly ILogger<BillingController> _logger;
 
-    public BillingController(IBillingCalculationService billingCalculationService)
+    public BillingController(IBillingCalculationService billingCalculationService, ILogger<BillingController> logger)
     {
         _billingCalculationService = billingCalculationService;
+        _logger = logger;
     }
 
     [HttpPost("calculate")]
@@ -30,7 +32,8 @@ public class BillingController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return Problem(title: "Billing calculation configuration error", detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
+            _logger.LogError(ex, "Billing calculation failed because tariff configuration is invalid.");
+            return UnprocessableEntity("Billing calculation could not be completed due to tariff configuration issues.");
         }
     }
 }
